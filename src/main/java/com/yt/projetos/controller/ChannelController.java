@@ -96,6 +96,8 @@ public class ChannelController {
                 link.getTitle(),
                 link.getUrl(),
                 link.getNote(),
+                link.getThumbnailUrl(),
+                link.getType(),
                 link.getCreatedAt()
         );
     }

@@ -78,6 +78,8 @@ public class ChannelService {
             .title(request.title())
             .url(request.url())
             .note(request.note())
+            .thumbnailUrl(request.thumbnailUrl())
+            .type(request.type() != null ? request.type() : com.yt.projetos.model.ReferenceType.LINK)
                 .build();
         return channelReferenceLinkRepository.save(link);
     }

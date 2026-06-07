@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yt.projetos.dto.NoteResponse;
 import com.yt.projetos.dto.ReferenceResponse;
 import com.yt.projetos.dto.ScriptVersionResponse;
+import com.yt.projetos.dto.ScriptVersionRequest;
 import com.yt.projetos.dto.VideoIdeaResponse;
 import com.yt.projetos.dto.VideoScriptResponse;
 import com.yt.projetos.model.Note;
@@ -106,13 +107,27 @@ public class VideoIdeaController {
     }
 
     @PostMapping("/ideas/{ideaId}/script/versions")
-    public ResponseEntity<ScriptVersionResponse> createScriptVersion(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @RequestBody ScriptVersion versionRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(toScriptVersionResponse(videoIdeaService.createScriptVersion(currentUser, ideaId, versionRequest)));
+    public ResponseEntity<ScriptVersionResponse> createScriptVersion(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @RequestBody ScriptVersionRequest versionRequest) {
+        if (versionRequest == null || versionRequest.getLabel() == null || versionRequest.getLabel().trim().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome da versão não pode ser vazio");
+        }
+        
+        ScriptVersion version = ScriptVersion.builder()
+                .label(versionRequest.getLabel().trim())
+                .build();
+                
+        return ResponseEntity.status(HttpStatus.CREATED).body(toScriptVersionResponse(videoIdeaService.createScriptVersion(currentUser, ideaId, version)));
     }
 
     @PostMapping("/ideas/{ideaId}/script/versions/{versionId}/restore")
     public ResponseEntity<VideoScriptResponse> restoreScriptVersion(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @PathVariable UUID versionId) {
         return ResponseEntity.ok(toVideoScriptResponse(videoIdeaService.restoreScriptVersion(currentUser, ideaId, versionId)));
+    }
+
+    @DeleteMapping("/ideas/{ideaId}/script/versions/{versionId}")
+    public ResponseEntity<?> deleteScriptVersion(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @PathVariable UUID versionId) {
+        videoIdeaService.deleteScriptVersion(currentUser, ideaId, versionId);
+        return ResponseEntity.ok().build();
     }
 
     private VideoIdeaResponse toVideoIdeaResponse(VideoIdea idea) {

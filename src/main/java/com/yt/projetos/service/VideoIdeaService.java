@@ -187,6 +187,18 @@ public class VideoIdeaService {
         return videoScriptRepository.save(script);
     }
 
+    public void deleteScriptVersion(User currentUser, UUID ideaId, UUID versionId) {
+        getOwnedIdea(currentUser, ideaId);
+        ScriptVersion version = scriptVersionRepository.findById(versionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        
+        if (!version.getVideoIdea().getId().equals(ideaId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Versão não pertence a esta ideia");
+        }
+        
+        scriptVersionRepository.delete(version);
+    }
+
     private VideoIdea getOwnedIdea(User currentUser, UUID ideaId) {
         if (currentUser == null || ideaId == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
