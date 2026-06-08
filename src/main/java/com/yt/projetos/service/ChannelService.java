@@ -37,6 +37,7 @@ public class ChannelService {
     private final VideoScriptRepository videoScriptRepository;
     private final ScriptVersionRepository scriptVersionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SuggestionService suggestionService;
 
     public List<Channel> getChannels(User currentUser) {
         return currentUser == null ? List.of() : channelRepository.findByUserId(currentUser.getId());
@@ -81,7 +82,13 @@ public class ChannelService {
             .thumbnailUrl(request.thumbnailUrl())
             .type(request.type() != null ? request.type() : com.yt.projetos.model.ReferenceType.LINK)
                 .build();
-        return channelReferenceLinkRepository.save(link);
+        ChannelReferenceLink saved = channelReferenceLinkRepository.save(link);
+        
+        if (request.url() != null && (request.url().contains("youtube.com/@") || request.url().contains("youtube.com/channel/") || request.url().contains("youtube.com/c/"))) {
+            suggestionService.scrapeSuggestionsForChannel(channel, request.url(), request.title());
+        }
+        
+        return saved;
     }
 
     public void deleteReferenceLink(User currentUser, UUID id) {
