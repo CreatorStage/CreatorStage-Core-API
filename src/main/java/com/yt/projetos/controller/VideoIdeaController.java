@@ -22,12 +22,12 @@ import com.yt.projetos.dto.ScriptVersionResponse;
 import com.yt.projetos.dto.ScriptVersionRequest;
 import com.yt.projetos.dto.VideoIdeaResponse;
 import com.yt.projetos.dto.VideoScriptResponse;
+import com.yt.projetos.dto.VideoScriptRequest;
 import com.yt.projetos.model.Note;
 import com.yt.projetos.model.Reference;
 import com.yt.projetos.model.ScriptVersion;
 import com.yt.projetos.model.User;
 import com.yt.projetos.model.VideoIdea;
-import com.yt.projetos.model.VideoScript;
 import com.yt.projetos.service.VideoIdeaService;
 
 import lombok.RequiredArgsConstructor;
@@ -97,7 +97,7 @@ public class VideoIdeaController {
     }
 
     @PutMapping("/ideas/{ideaId}/script")
-    public ResponseEntity<VideoScriptResponse> saveScript(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @RequestBody VideoScript scriptUpdate) {
+    public ResponseEntity<VideoScriptResponse> saveScript(@AuthenticationPrincipal User currentUser, @PathVariable UUID ideaId, @RequestBody VideoScriptRequest scriptUpdate) {
         return ResponseEntity.ok(toVideoScriptResponse(videoIdeaService.saveScript(currentUser, ideaId, scriptUpdate)));
     }
 
@@ -178,7 +178,7 @@ public class VideoIdeaController {
         );
     }
 
-    private VideoScriptResponse toVideoScriptResponse(VideoScript script) {
+    private VideoScriptResponse toVideoScriptResponse(ScriptVersion script) {
         return new VideoScriptResponse(
                 script.getId(),
                 script.getVideoIdea() != null ? script.getVideoIdea().getId() : null,

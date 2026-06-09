@@ -54,7 +54,7 @@ public class SuggestionService {
                             .sourceChannelUrl(sourceChannelUrl)
                             .title(title)
                             .url(url)
-                            .views(views)
+                            .viewsCount(parseViews(views))
                             .thumbnailUrl(thumbnailUrl)
                             .build();
 
@@ -89,5 +89,33 @@ public class SuggestionService {
             return "https://img.youtube.com/vi/" + matcher.group(1) + "/hqdefault.jpg";
         }
         return null;
+    }
+
+    public static Long parseViews(String viewsStr) {
+        if (viewsStr == null || viewsStr.isBlank()) {
+            return null;
+        }
+        try {
+            String clean = viewsStr.toLowerCase()
+                    .replaceAll("[^a-z0-9,\\.]", ""); // Keep only numbers, comma, dot, and suffixes (k, m, b, mi, bi)
+            
+            double multiplier = 1.0;
+            if (clean.contains("bi") || clean.contains("b")) {
+                multiplier = 1_000_000_000.0;
+                clean = clean.replaceAll("[a-z]", "");
+            } else if (clean.contains("mi") || clean.contains("m")) {
+                multiplier = 1_000_000.0;
+                clean = clean.replaceAll("[a-z]", "");
+            } else if (clean.contains("k")) {
+                multiplier = 1_000.0;
+                clean = clean.replaceAll("[a-z]", "");
+            }
+            
+            clean = clean.replace(".", "").replace(",", ".");
+            double parsedVal = Double.parseDouble(clean);
+            return (long) (parsedVal * multiplier);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

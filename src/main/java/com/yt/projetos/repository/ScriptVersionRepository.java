@@ -12,4 +12,5 @@ import com.yt.projetos.model.ScriptVersion;
 public interface ScriptVersionRepository extends JpaRepository<ScriptVersion, UUID> {
     List<ScriptVersion> findByVideoIdeaIdOrderByCreatedAtDesc(UUID videoIdeaId);
     void deleteByVideoIdeaId(UUID videoIdeaId);
+    java.util.Optional<ScriptVersion> findByVideoIdeaIdAndIsCurrentTrue(UUID videoIdeaId);
 }

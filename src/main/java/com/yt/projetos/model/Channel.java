@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
-import jakarta.persistence.Converter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "channels")
@@ -44,14 +44,16 @@ public class Channel {
     private String niche;
 
     @Builder.Default
-    @Convert(converter = StringListConverter.class)
-    @Column(name = "cta_templates", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "cta_templates", columnDefinition = "jsonb")
     private List<String> ctaTemplates = new ArrayList<>();
 
-    @Column(name = "description_blocks", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "description_blocks", columnDefinition = "jsonb")
     private String descriptionBlocks;
 
-    @Column(name = "checklist_templates", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "checklist_templates", columnDefinition = "jsonb")
     private String checklistTemplates;
 
     @org.hibernate.annotations.CreationTimestamp
@@ -60,19 +62,5 @@ public class Channel {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    @Converter
-    public static class StringListConverter implements AttributeConverter<List<String>, String> {
-        @Override
-        public String convertToDatabaseColumn(List<String> list) {
-            return list == null ? "" : String.join("\n", list);
-        }
-
-        @Override
-        public List<String> convertToEntityAttribute(String joined) {
-            return joined == null || joined.trim().isEmpty() 
-                ? new ArrayList<>() 
-                : new ArrayList<>(java.util.Arrays.asList(joined.split("\n")));
-        }
-    }
 }
+

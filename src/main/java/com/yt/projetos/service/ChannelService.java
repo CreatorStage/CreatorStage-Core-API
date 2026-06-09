@@ -21,7 +21,6 @@ import com.yt.projetos.repository.NoteRepository;
 import com.yt.projetos.repository.ReferenceRepository;
 import com.yt.projetos.repository.ScriptVersionRepository;
 import com.yt.projetos.repository.VideoIdeaRepository;
-import com.yt.projetos.repository.VideoScriptRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +33,6 @@ public class ChannelService {
     private final NoteRepository noteRepository;
     private final ReferenceRepository referenceRepository;
     private final ChannelReferenceLinkRepository channelReferenceLinkRepository;
-    private final VideoScriptRepository videoScriptRepository;
     private final ScriptVersionRepository scriptVersionRepository;
     private final PasswordEncoder passwordEncoder;
     private final SuggestionService suggestionService;
@@ -114,7 +112,6 @@ public class ChannelService {
             noteRepository.deleteAll(noteRepository.findAllByVideoIdeaIdOrderByCreatedAtAsc(idea.getId()));
             List<Reference> references = referenceRepository.findByVideoIdeaId(idea.getId());
             referenceRepository.deleteAll(references);
-            videoScriptRepository.findByVideoIdeaId(idea.getId()).ifPresent(videoScriptRepository::delete);
             scriptVersionRepository.deleteByVideoIdeaId(idea.getId());
             videoIdeaRepository.delete(idea);
         }

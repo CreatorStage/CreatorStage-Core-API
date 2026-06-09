@@ -46,8 +46,30 @@ public class SuggestedVideo {
     @Column(name = "source_channel_url", columnDefinition = "TEXT")
     private String sourceChannelUrl;
 
-    @Column(name = "views")
-    private String views;
+    @Column(name = "views_count")
+    private Long viewsCount;
+
+    @jakarta.persistence.Transient
+    public String getViews() {
+        return formatViews(viewsCount);
+    }
+
+    public static String formatViews(Long count) {
+        if (count == null) return "0";
+        if (count >= 1_000_000_000) {
+            double val = count / 1_000_000_000.0;
+            return String.format(java.util.Locale.US, val % 1 == 0 ? "%.0fB" : "%.1fB", val);
+        }
+        if (count >= 1_000_000) {
+            double val = count / 1_000_000.0;
+            return String.format(java.util.Locale.US, val % 1 == 0 ? "%.0fM" : "%.1fM", val);
+        }
+        if (count >= 1_000) {
+            double val = count / 1_000.0;
+            return String.format(java.util.Locale.US, val % 1 == 0 ? "%.0fK" : "%.1fK", val);
+        }
+        return String.valueOf(count);
+    }
 
     @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
