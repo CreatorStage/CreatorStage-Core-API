@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.yt.projetos.dto.ChannelReferenceLinkRequest;
+import com.yt.projetos.dto.ChannelRequest;
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.model.ChannelReferenceLink;
 import com.yt.projetos.model.Reference;
@@ -41,11 +42,19 @@ public class ChannelService {
         return currentUser == null ? List.of() : channelRepository.findByUserId(currentUser.getId());
     }
 
-    public Channel createChannel(User currentUser, Channel channel) {
+    @Transactional
+    public Channel createChannel(User currentUser, ChannelRequest request) {
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        channel.setUser(currentUser);
+        Channel channel = Channel.builder()
+                .name(request.name())
+                .niche(request.niche())
+                .ctaTemplates(request.ctaTemplates() != null ? request.ctaTemplates() : new java.util.ArrayList<>())
+                .descriptionBlocks(request.descriptionBlocks())
+                .checklistTemplates(request.checklistTemplates())
+                .user(currentUser)
+                .build();
         return channelRepository.save(channel);
     }
 
@@ -53,13 +62,14 @@ public class ChannelService {
         return getOwnedChannel(currentUser, id);
     }
 
-    public Channel updateChannel(User currentUser, UUID id, Channel updates) {
+    @Transactional
+    public Channel updateChannel(User currentUser, UUID id, ChannelRequest updates) {
         Channel channel = getOwnedChannel(currentUser, id);
-        if (updates.getName() != null) channel.setName(updates.getName());
-        if (updates.getNiche() != null) channel.setNiche(updates.getNiche());
-        if (updates.getCtaTemplates() != null) channel.setCtaTemplates(updates.getCtaTemplates());
-        if (updates.getDescriptionBlocks() != null) channel.setDescriptionBlocks(updates.getDescriptionBlocks());
-        if (updates.getChecklistTemplates() != null) channel.setChecklistTemplates(updates.getChecklistTemplates());
+        if (updates.name() != null) channel.setName(updates.name());
+        if (updates.niche() != null) channel.setNiche(updates.niche());
+        if (updates.ctaTemplates() != null) channel.setCtaTemplates(updates.ctaTemplates());
+        if (updates.descriptionBlocks() != null) channel.setDescriptionBlocks(updates.descriptionBlocks());
+        if (updates.checklistTemplates() != null) channel.setChecklistTemplates(updates.checklistTemplates());
         return channelRepository.save(channel);
     }
 
@@ -107,14 +117,11 @@ public class ChannelService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Senha incorreta");
         }
 
-        List<VideoIdea> ideas = videoIdeaRepository.findByChannelId(id);
-        for (VideoIdea idea : ideas) {
-            noteRepository.deleteAll(noteRepository.findAllByVideoIdeaIdOrderByCreatedAtAsc(idea.getId()));
-            List<Reference> references = referenceRepository.findByVideoIdeaId(idea.getId());
-            referenceRepository.deleteAll(references);
-            scriptVersionRepository.deleteByVideoIdeaId(idea.getId());
-            videoIdeaRepository.delete(idea);
-        }
+        videoIdeaRepository.deleteNotesByChannelId(id);
+        videoIdeaRepository.deleteReferencesByChannelId(id);
+        videoIdeaRepository.deleteScriptVersionsByChannelId(id);
+        videoIdeaRepository.deleteSponsorshipsByChannelId(id);
+        videoIdeaRepository.deleteByChannelId(id);
 
         channelReferenceLinkRepository.deleteByChannelId(id);
         channelRepository.delete(channel);

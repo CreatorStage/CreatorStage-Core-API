@@ -3,11 +3,13 @@ package com.yt.projetos.controller;
 import com.yt.projetos.model.Goal;
 import com.yt.projetos.model.User;
 import com.yt.projetos.dto.GoalResponse;
+import com.yt.projetos.dto.GoalRequest;
 import com.yt.projetos.service.GoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,12 +28,12 @@ public class GoalController {
     }
 
     @PostMapping("/channels/{channelId}/goals")
-    public ResponseEntity<GoalResponse> createGoal(@AuthenticationPrincipal User currentUser, @PathVariable UUID channelId, @RequestBody Goal goal) {
-        return ResponseEntity.status(201).body(toGoalResponse(goalService.createGoal(currentUser, channelId, goal)));
+    public ResponseEntity<GoalResponse> createGoal(@AuthenticationPrincipal User currentUser, @PathVariable UUID channelId, @Valid @RequestBody GoalRequest request) {
+        return ResponseEntity.status(201).body(toGoalResponse(goalService.createGoal(currentUser, channelId, request)));
     }
 
     @PutMapping("/goals/{id}")
-    public ResponseEntity<GoalResponse> updateGoal(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @RequestBody Goal updates) {
+    public ResponseEntity<GoalResponse> updateGoal(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @Valid @RequestBody GoalRequest updates) {
         return ResponseEntity.ok(toGoalResponse(goalService.updateGoal(currentUser, id, updates)));
     }
 

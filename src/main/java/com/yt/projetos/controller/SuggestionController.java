@@ -34,8 +34,7 @@ public class SuggestionController {
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID channelId,
             @PathVariable UUID videoId) {
-        channelService.getChannel(currentUser, channelId);
-        suggestionService.deleteSuggestion(videoId);
+        suggestionService.deleteSuggestion(currentUser, channelId, videoId);
         return ResponseEntity.noContent().build();
     }
 

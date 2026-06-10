@@ -4,10 +4,12 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.yt.projetos.model.User;
 import com.yt.projetos.model.UserSettings;
+import com.yt.projetos.dto.UserSettingsRequest;
 import com.yt.projetos.repository.UserRepository;
 import com.yt.projetos.repository.UserSettingsRepository;
 
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SettingsService {
 
     private final UserSettingsRepository userSettingsRepository;
@@ -35,21 +38,21 @@ public class SettingsService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
-    public UserSettings updateSettings(User currentUser, UUID userId, UserSettings updates) {
+    public UserSettings updateSettings(User currentUser, UUID userId, UserSettingsRequest updates) {
         ensureOwner(currentUser, userId);
 
         UserSettings settings = userSettingsRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (updates.getTheme() != null) {
-            settings.setTheme(updates.getTheme());
+        if (updates.theme() != null) {
+            settings.setTheme(updates.theme());
         }
-        settings.setEmailNotifications(updates.isEmailNotifications());
-        if (updates.getPreferredLanguage() != null) {
-            settings.setPreferredLanguage(updates.getPreferredLanguage());
+        settings.setEmailNotifications(updates.emailNotifications());
+        if (updates.preferredLanguage() != null) {
+            settings.setPreferredLanguage(updates.preferredLanguage());
         }
-        if (updates.getProfileBio() != null) {
-            settings.setProfileBio(updates.getProfileBio());
+        if (updates.profileBio() != null) {
+            settings.setProfileBio(updates.profileBio());
         }
         return userSettingsRepository.save(settings);
     }

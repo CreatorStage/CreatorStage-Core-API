@@ -1,4 +1,10 @@
 spring:
+  rabbitmq:
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:}
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
   datasource:
     url: jdbc:postgresql://localhost:5432/yt_platform
     username: postgres

@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.yt.projetos.dto.UserSettingsResponse;
+import com.yt.projetos.dto.UserSettingsRequest;
 import com.yt.projetos.model.UserSettings;
 import com.yt.projetos.model.User;
 import com.yt.projetos.service.SettingsService;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +35,7 @@ public class SettingsController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<UserSettingsResponse> updateSettings(@AuthenticationPrincipal User currentUser, @PathVariable UUID userId, @RequestBody UserSettings updates) {
+    public ResponseEntity<UserSettingsResponse> updateSettings(@AuthenticationPrincipal User currentUser, @PathVariable UUID userId, @Valid @RequestBody UserSettingsRequest updates) {
         return ResponseEntity.ok(toSettingsResponse(settingsService.updateSettings(currentUser, userId, updates)));
     }
 
