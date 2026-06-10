@@ -1,13 +1,15 @@
 package com.yt.projetos.service;
 
+import com.yt.projetos.config.RabbitMQConfig;
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.model.SuggestedVideo;
+import com.yt.projetos.repository.ChannelRepository;
 import com.yt.projetos.repository.SuggestedVideoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -20,53 +22,68 @@ import java.util.regex.Pattern;
 public class SuggestionService {
 
     private final SuggestedVideoRepository suggestedVideoRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final ChannelRepository channelRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Async
     public void scrapeSuggestionsForChannel(Channel channel, String sourceChannelUrl, String sourceChannelName) {
-        log.info("Iniciando scraping em background para URL: {}", sourceChannelUrl);
+        log.info("Iniciando publicação de solicitação de scraping para URL: {}", sourceChannelUrl);
 
         // Verifica se já não existem sugestões deste canal (evita duplicidade)
         if (suggestedVideoRepository.existsBySourceChannelUrlAndChannelId(sourceChannelUrl, channel.getId())) {
-            log.info("Já existem sugestões do canal {} para o channel_id {}. Pulando scraping.", sourceChannelUrl, channel.getId());
+            log.info("Já existem sugestões do canal {} para o channel_id {}. Pulando publicação.", sourceChannelUrl, channel.getId());
             return;
         }
 
         try {
-            String pythonApiUrl = System.getenv().getOrDefault("SCRAPER_API_URL", "http://localhost:8000/scrape");
-            Map<String, Object> request = Map.of("urls", List.of(sourceChannelUrl));
+            Map<String, Object> message = Map.of(
+                "channelId", channel.getId().toString(),
+                "sourceChannelUrl", sourceChannelUrl,
+                "sourceChannelName", sourceChannelName != null ? sourceChannelName : ""
+            );
 
-            Map<String, Object> response = restTemplate.postForObject(pythonApiUrl, request, Map.class);
-            if (response != null && "success".equals(response.get("status"))) {
-                List<Map<String, String>> data = (List<Map<String, String>>) response.get("data");
-
-                for (Map<String, String> videoData : data) {
-                    String title = videoData.get("titulo");
-                    String url = videoData.get("url_video");
-                    String views = videoData.get("visualizacoes");
-                    
-                    // Tentar extrair o ID do vídeo para montar a thumbnail
-                    String thumbnailUrl = extractThumbnailUrl(url);
-
-                    SuggestedVideo suggestedVideo = SuggestedVideo.builder()
-                            .channel(channel)
-                            .sourceChannelName(sourceChannelName != null ? sourceChannelName : videoData.get("canal"))
-                            .sourceChannelUrl(sourceChannelUrl)
-                            .title(title)
-                            .url(url)
-                            .viewsCount(parseViews(views))
-                            .thumbnailUrl(thumbnailUrl)
-                            .build();
-
-                    suggestedVideoRepository.save(suggestedVideo);
-                }
-                log.info("Scraping finalizado. {} vídeos salvos como sugestões.", data.size());
-            } else {
-                log.error("Falha na API Python: {}", response);
-            }
+            rabbitTemplate.convertAndSend(RabbitMQConfig.SCRAPE_REQUESTS_QUEUE, message);
+            log.info("Mensagem de scraping publicada com sucesso na fila {}", RabbitMQConfig.SCRAPE_REQUESTS_QUEUE);
         } catch (Exception e) {
-            log.error("Erro ao chamar serviço de scraping Python: ", e);
+            log.error("Erro ao publicar solicitação de scraping no RabbitMQ: ", e);
         }
+    }
+
+    public void saveSuggestions(java.util.UUID channelId, String sourceChannelUrl, String sourceChannelName, List<Map<String, String>> videosData) {
+        log.info("Salvando {} sugestões recebidas para o canal {}", videosData.size(), channelId);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
+        if (channel == null) {
+            log.error("Canal não encontrado para o ID: {}", channelId);
+            return;
+        }
+
+        // Verifica se já não existem sugestões deste canal (evita duplicidade de inserção assíncrona tardia)
+        if (suggestedVideoRepository.existsBySourceChannelUrlAndChannelId(sourceChannelUrl, channelId)) {
+            log.info("Já existem sugestões do canal {} para o channel_id {}. Pulando salvamento.", sourceChannelUrl, channelId);
+            return;
+        }
+
+        for (Map<String, String> videoData : videosData) {
+            String title = videoData.get("titulo");
+            String url = videoData.get("url_video");
+            String views = videoData.get("visualizacoes");
+            
+            // Tentar extrair o ID do vídeo para montar a thumbnail
+            String thumbnailUrl = extractThumbnailUrl(url);
+
+            SuggestedVideo suggestedVideo = SuggestedVideo.builder()
+                    .channel(channel)
+                    .sourceChannelName(sourceChannelName != null && !sourceChannelName.isBlank() ? sourceChannelName : videoData.get("canal"))
+                    .sourceChannelUrl(sourceChannelUrl)
+                    .title(title)
+                    .url(url)
+                    .viewsCount(parseViews(views))
+                    .thumbnailUrl(thumbnailUrl)
+                    .build();
+
+            suggestedVideoRepository.save(suggestedVideo);
+        }
+        log.info("Processo de sugestão finalizado. {} vídeos salvos no banco.", videosData.size());
     }
 
     public List<SuggestedVideo> getSuggestionsForChannel(java.util.UUID channelId) {
