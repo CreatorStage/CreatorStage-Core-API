@@ -1,6 +1,5 @@
 package com.yt.projetos.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -9,9 +8,9 @@ public record RegisterRequest(
         @Size(min = 2, max = 100, message = "O nome deve ter entre 2 e 100 caracteres")
         String name,
 
-        @NotBlank(message = "O e-mail é obrigatório")
-        @Email(message = "O e-mail deve ser válido")
-        String email,
+        @NotBlank(message = "O username é obrigatório")
+        @Size(min = 3, max = 30, message = "O username deve ter entre 3 e 30 caracteres")
+        String username,
 
         @NotBlank(message = "A senha é obrigatória")
         @Size(min = 6, message = "A senha deve ter no mínimo 6 caracteres")

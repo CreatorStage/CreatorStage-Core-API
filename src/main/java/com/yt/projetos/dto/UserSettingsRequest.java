@@ -6,8 +6,6 @@ public record UserSettingsRequest(
         @NotBlank(message = "O tema não pode ser vazio")
         String theme,
         
-        boolean emailNotifications,
-        
         @NotBlank(message = "O idioma preferido não pode ser vazio")
         String preferredLanguage,
         

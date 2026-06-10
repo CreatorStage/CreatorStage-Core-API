@@ -27,9 +27,6 @@ public class UserSettings implements Persistable<UUID> {
     private String theme = "dark";
 
     @Builder.Default
-    private boolean emailNotifications = true;
-
-    @Builder.Default
     private String preferredLanguage = "pt-BR";
 
     private String profileBio;

@@ -43,7 +43,6 @@ public class SettingsController {
         return new UserSettingsResponse(
                 settings.getUserId(),
                 settings.getTheme(),
-                settings.isEmailNotifications(),
                 settings.getPreferredLanguage(),
                 settings.getProfileBio()
         );
