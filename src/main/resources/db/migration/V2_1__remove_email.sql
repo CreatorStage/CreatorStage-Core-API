@@ -1,8 +1,8 @@
 -- 1. Adicionar coluna username na tabela users
 ALTER TABLE users ADD COLUMN username varchar(255);
 
--- 2. Migrar dados: usar parte do email antes do @ como username
-UPDATE users SET username = split_part(email, '@', 1) || '_' || substr(id::text, 1, 8);
+-- 2. Migrar dados: usar parte do email antes do @ como username, se nulo gerar aleatorio
+UPDATE users SET username = COALESCE(split_part(email, '@', 1), 'user') || '_' || substr(id::text, 1, 8);
 
 -- 3. Tornar username NOT NULL e UNIQUE
 ALTER TABLE users ALTER COLUMN username SET NOT NULL;
