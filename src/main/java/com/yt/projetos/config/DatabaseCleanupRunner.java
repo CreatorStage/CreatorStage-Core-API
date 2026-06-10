@@ -33,6 +33,32 @@ public class DatabaseCleanupRunner implements CommandLineRunner {
             int channelsChecklistCount = jdbcTemplate.update(
                 "UPDATE channels SET checklist_templates = NULL WHERE checklist_templates::text = '' OR checklist_templates::text = '\"\"'"
             );
+
+            // Fix jsonb type casting errors from Hibernate ddl-auto
+            try {
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS channels ALTER COLUMN checklist_templates TYPE jsonb USING checklist_templates::jsonb");
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS channels ALTER COLUMN cta_templates TYPE jsonb USING cta_templates::jsonb");
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS channels ALTER COLUMN description_blocks TYPE jsonb USING description_blocks::jsonb");
+            } catch (Exception e) {
+                log.debug("Colunas JSONB já atualizadas ou erro: " + e.getMessage());
+            }
+
+            // Fix users username nullable error from Hibernate ddl-auto
+            try {
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS username varchar(255)");
+                jdbcTemplate.execute("UPDATE users SET username = COALESCE(split_part(email, '@', 1), 'user') || '_' || substr(id::text, 1, 8) WHERE username IS NULL");
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS users ALTER COLUMN username SET NOT NULL");
+                jdbcTemplate.execute("ALTER TABLE IF EXISTS users ADD CONSTRAINT users_username_unique UNIQUE (username)");
+            } catch (Exception e) {
+                log.debug("Coluna username já atualizada ou erro (email column might not exist): " + e.getMessage());
+                try {
+                    jdbcTemplate.execute("UPDATE users SET username = 'user_' || substr(id::text, 1, 8) WHERE username IS NULL");
+                    jdbcTemplate.execute("ALTER TABLE IF EXISTS users ALTER COLUMN username SET NOT NULL");
+                } catch (Exception innerE) {
+                    log.debug("Erro ao tentar fallback para username: " + innerE.getMessage());
+                }
+            }
+
             
             log.info("Limpeza concluída. Registros corrigidos: video_ideas.tags={}, video_ideas.alternative_titles={}, channels.cta_templates={}, channels.description_blocks={}, channels.checklist_templates={}",
                      videoIdeasTagsCount, videoIdeasAltTitlesCount, channelsCtaCount, channelsDescCount, channelsChecklistCount);
