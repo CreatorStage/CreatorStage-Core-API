@@ -24,7 +24,7 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByUsername(request.username())
             .filter(found -> passwordEncoder.matches(request.password(), found.getPassword()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
 
@@ -32,13 +32,13 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail já cadastrado");
+        if (userRepository.findByUsername(request.username()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username já cadastrado");
         }
 
         User user = User.builder()
                 .name(request.name())
-                .email(request.email())
+                .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .build();
         User savedUser = userRepository.save(user);
@@ -53,6 +53,6 @@ public class AuthService {
     }
 
     private UserResponse toUserResponse(User user) {
-        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getCreatedAt());
+        return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getCreatedAt());
     }
 }

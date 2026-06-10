@@ -32,7 +32,6 @@ public class SettingsService {
                                 .user(user)
                                 .userId(userId)
                                 .theme("dark")
-                                .emailNotifications(true)
                                 .preferredLanguage("pt-BR")
                                 .build()))
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
@@ -47,7 +46,6 @@ public class SettingsService {
         if (updates.theme() != null) {
             settings.setTheme(updates.theme());
         }
-        settings.setEmailNotifications(updates.emailNotifications());
         if (updates.preferredLanguage() != null) {
             settings.setPreferredLanguage(updates.preferredLanguage());
         }
