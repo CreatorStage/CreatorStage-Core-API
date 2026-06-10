@@ -1,5 +1,6 @@
 spring:
   rabbitmq:
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:}
     host: ${SPRING_RABBITMQ_HOST:rabbitmq}
     port: ${SPRING_RABBITMQ_PORT:5672}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
@@ -10,7 +11,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
 
 app:
