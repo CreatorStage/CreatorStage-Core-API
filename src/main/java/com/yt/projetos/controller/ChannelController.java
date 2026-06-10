@@ -18,10 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yt.projetos.dto.ChannelReferenceLinkRequest;
 import com.yt.projetos.dto.ChannelReferenceLinkResponse;
 import com.yt.projetos.dto.ChannelResponse;
+import com.yt.projetos.dto.ChannelRequest;
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.model.ChannelReferenceLink;
 import com.yt.projetos.model.User;
 import com.yt.projetos.service.ChannelService;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,8 +41,8 @@ public class ChannelController {
     }
 
     @PostMapping
-    public ResponseEntity<ChannelResponse> createChannel(@AuthenticationPrincipal User currentUser, @RequestBody Channel channel) {
-        return ResponseEntity.status(201).body(toChannelResponse(channelService.createChannel(currentUser, channel)));
+    public ResponseEntity<ChannelResponse> createChannel(@AuthenticationPrincipal User currentUser, @Valid @RequestBody ChannelRequest request) {
+        return ResponseEntity.status(201).body(toChannelResponse(channelService.createChannel(currentUser, request)));
     }
 
     @GetMapping("/{id}")
@@ -49,7 +51,7 @@ public class ChannelController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ChannelResponse> updateChannel(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @RequestBody Channel updates) {
+    public ResponseEntity<ChannelResponse> updateChannel(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @Valid @RequestBody ChannelRequest updates) {
         return ResponseEntity.ok(toChannelResponse(channelService.updateChannel(currentUser, id, updates)));
     }
 

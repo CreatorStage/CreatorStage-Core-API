@@ -33,10 +33,34 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
+                .claim("name", user.getName())
+                .claim("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
                 .compact();
+    }
+
+    public User extractUser(String token) {
+        Claims claims = getClaims(token);
+        String idStr = claims.getSubject();
+        String email = claims.get("email", String.class);
+        String name = claims.get("name", String.class);
+        String createdAtStr = claims.get("createdAt", String.class);
+        
+        java.time.LocalDateTime createdAt = null;
+        if (createdAtStr != null) {
+            try {
+                createdAt = java.time.LocalDateTime.parse(createdAtStr);
+            } catch (Exception ignored) {}
+        }
+        
+        return User.builder()
+                .id(UUID.fromString(idStr))
+                .email(email)
+                .name(name)
+                .createdAt(createdAt)
+                .build();
     }
 
     public UUID extractUserId(String token) {

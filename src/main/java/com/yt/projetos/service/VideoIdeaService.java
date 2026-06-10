@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.yt.projetos.model.Channel;
+import com.yt.projetos.dto.VideoIdeaRequest;
 import com.yt.projetos.model.Note;
 import com.yt.projetos.model.Reference;
 import com.yt.projetos.model.ScriptVersion;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class VideoIdeaService {
 
     private final VideoIdeaRepository videoIdeaRepository;
@@ -41,30 +43,53 @@ public class VideoIdeaService {
         return videoIdeaRepository.findByChannelId(channelId);
     }
 
-    public VideoIdea createIdea(User currentUser, UUID channelId, VideoIdea idea) {
-        idea.setChannel(getOwnedChannel(currentUser, channelId));
-        idea.setStatus(VideoIdeaStatus.IDEA);
+    @Transactional
+    public VideoIdea createIdea(User currentUser, UUID channelId, VideoIdeaRequest request) {
+        VideoIdea idea = VideoIdea.builder()
+                .mainTitle(request.mainTitle())
+                .description(request.description())
+                .status(request.status() != null ? request.status() : VideoIdeaStatus.IDEA)
+                .tags(request.tags() != null ? request.tags() : new java.util.ArrayList<>())
+                .alternativeTitles(request.alternativeTitles() != null ? request.alternativeTitles() : new java.util.ArrayList<>())
+                .deadline(request.deadline())
+                .evergreen(request.evergreen() != null ? request.evergreen() : false)
+                .trend(request.trend() != null ? request.trend() : false)
+                .checklistState(request.checklistState())
+                .publishedUrl(request.publishedUrl())
+                .channel(getOwnedChannel(currentUser, channelId))
+                .build();
+                
+        if (Boolean.TRUE.equals(request.sponsored())) {
+            idea.setSponsored(true);
+            idea.setSponsorBrand(request.sponsorBrand());
+            idea.setSponsorDeadline(request.sponsorDeadline());
+            idea.setSponsorTrackingUrl(request.sponsorTrackingUrl());
+            idea.setSponsorValue(request.sponsorValue());
+            idea.setSponsorPaymentStatus(request.sponsorPaymentStatus());
+        }
+        
         return videoIdeaRepository.save(idea);
     }
 
-    public VideoIdea updateIdea(User currentUser, UUID id, VideoIdea updates) {
+    @Transactional
+    public VideoIdea updateIdea(User currentUser, UUID id, VideoIdeaRequest updates) {
         VideoIdea idea = getOwnedIdea(currentUser, id);
-        if (updates.getMainTitle() != null) idea.setMainTitle(updates.getMainTitle());
-        if (updates.getDescription() != null) idea.setDescription(updates.getDescription());
-        if (updates.getStatus() != null) idea.setStatus(updates.getStatus());
-        if (updates.getTags() != null) idea.setTags(updates.getTags());
-        if (updates.getAlternativeTitles() != null) idea.setAlternativeTitles(updates.getAlternativeTitles());
-        if (updates.getDeadline() != null) idea.setDeadline(updates.getDeadline());
-        if (updates.getEvergreen() != null) idea.setEvergreen(updates.getEvergreen());
-        if (updates.getTrend() != null) idea.setTrend(updates.getTrend());
-        if (updates.getSponsored() != null) idea.setSponsored(updates.getSponsored());
-        if (updates.getChecklistState() != null) idea.setChecklistState(updates.getChecklistState());
-        if (updates.getSponsorBrand() != null) idea.setSponsorBrand(updates.getSponsorBrand());
-        if (updates.getSponsorDeadline() != null) idea.setSponsorDeadline(updates.getSponsorDeadline());
-        if (updates.getSponsorTrackingUrl() != null) idea.setSponsorTrackingUrl(updates.getSponsorTrackingUrl());
-        if (updates.getSponsorValue() != null) idea.setSponsorValue(updates.getSponsorValue());
-        if (updates.getSponsorPaymentStatus() != null) idea.setSponsorPaymentStatus(updates.getSponsorPaymentStatus());
-        if (updates.getPublishedUrl() != null) idea.setPublishedUrl(updates.getPublishedUrl());
+        if (updates.mainTitle() != null) idea.setMainTitle(updates.mainTitle());
+        if (updates.description() != null) idea.setDescription(updates.description());
+        if (updates.status() != null) idea.setStatus(updates.status());
+        if (updates.tags() != null) idea.setTags(updates.tags());
+        if (updates.alternativeTitles() != null) idea.setAlternativeTitles(updates.alternativeTitles());
+        if (updates.deadline() != null) idea.setDeadline(updates.deadline());
+        if (updates.evergreen() != null) idea.setEvergreen(updates.evergreen());
+        if (updates.trend() != null) idea.setTrend(updates.trend());
+        if (updates.sponsored() != null) idea.setSponsored(updates.sponsored());
+        if (updates.checklistState() != null) idea.setChecklistState(updates.checklistState());
+        if (updates.sponsorBrand() != null) idea.setSponsorBrand(updates.sponsorBrand());
+        if (updates.sponsorDeadline() != null) idea.setSponsorDeadline(updates.sponsorDeadline());
+        if (updates.sponsorTrackingUrl() != null) idea.setSponsorTrackingUrl(updates.sponsorTrackingUrl());
+        if (updates.sponsorValue() != null) idea.setSponsorValue(updates.sponsorValue());
+        if (updates.sponsorPaymentStatus() != null) idea.setSponsorPaymentStatus(updates.sponsorPaymentStatus());
+        if (updates.publishedUrl() != null) idea.setPublishedUrl(updates.publishedUrl());
         return videoIdeaRepository.save(idea);
     }
 
@@ -83,12 +108,14 @@ public class VideoIdeaService {
         return referenceRepository.findByVideoIdeaId(ideaId);
     }
 
+    @Transactional
     public Reference addReference(User currentUser, UUID ideaId, Reference reference) {
         VideoIdea idea = getOwnedIdea(currentUser, ideaId);
         reference.setVideoIdea(idea);
         return referenceRepository.save(reference);
     }
 
+    @Transactional
     public void deleteReference(User currentUser, UUID id) {
         Reference reference = referenceRepository.findById(id)
                 .filter(found -> isOwnedIdea(currentUser, found.getVideoIdea() != null ? found.getVideoIdea().getId() : null))
@@ -110,6 +137,7 @@ public class VideoIdeaService {
         return note;
     }
 
+    @Transactional
     public Note saveNotes(User currentUser, UUID ideaId, Note noteUpdate) {
         VideoIdea idea = getOwnedIdea(currentUser, ideaId);
         Note note = Note.builder().videoIdea(idea).content(noteUpdate.getContent()).build();
@@ -130,6 +158,7 @@ public class VideoIdeaService {
                         .build());
     }
 
+    @Transactional
     public ScriptVersion saveScript(User currentUser, UUID ideaId, com.yt.projetos.dto.VideoScriptRequest scriptUpdate) {
         VideoIdea idea = getOwnedIdea(currentUser, ideaId);
         ScriptVersion script = scriptVersionRepository.findByVideoIdeaIdAndIsCurrentTrue(ideaId)
@@ -160,6 +189,7 @@ public class VideoIdeaService {
                 .toList();
     }
 
+    @Transactional
     public ScriptVersion createScriptVersion(User currentUser, UUID ideaId, ScriptVersion versionRequest) {
         VideoIdea idea = getOwnedIdea(currentUser, ideaId);
         ScriptVersion script = scriptVersionRepository.findByVideoIdeaIdAndIsCurrentTrue(ideaId)
@@ -177,6 +207,7 @@ public class VideoIdeaService {
         return scriptVersionRepository.save(version);
     }
 
+    @Transactional
     public ScriptVersion restoreScriptVersion(User currentUser, UUID ideaId, UUID versionId) {
         VideoIdea idea = getOwnedIdea(currentUser, ideaId);
         ScriptVersion version = scriptVersionRepository.findById(versionId)
@@ -205,6 +236,7 @@ public class VideoIdeaService {
         return scriptVersionRepository.save(script);
     }
 
+    @Transactional
     public void deleteScriptVersion(User currentUser, UUID ideaId, UUID versionId) {
         getOwnedIdea(currentUser, ideaId);
         ScriptVersion version = scriptVersionRepository.findById(versionId)

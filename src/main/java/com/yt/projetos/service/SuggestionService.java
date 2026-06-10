@@ -3,22 +3,28 @@ package com.yt.projetos.service;
 import com.yt.projetos.config.RabbitMQConfig;
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.model.SuggestedVideo;
+import com.yt.projetos.model.User;
 import com.yt.projetos.repository.ChannelRepository;
 import com.yt.projetos.repository.SuggestedVideoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class SuggestionService {
 
     private final SuggestedVideoRepository suggestedVideoRepository;
@@ -49,6 +55,7 @@ public class SuggestionService {
         }
     }
 
+    @Transactional
     public void saveSuggestions(java.util.UUID channelId, String sourceChannelUrl, String sourceChannelName, List<Map<String, String>> videosData) {
         log.info("Salvando {} sugestões recebidas para o canal {}", videosData.size(), channelId);
         Channel channel = channelRepository.findById(channelId).orElse(null);
@@ -63,6 +70,7 @@ public class SuggestionService {
             return;
         }
 
+        java.util.List<SuggestedVideo> listToSave = new java.util.ArrayList<>();
         for (Map<String, String> videoData : videosData) {
             String title = videoData.get("titulo");
             String url = videoData.get("url_video");
@@ -81,8 +89,9 @@ public class SuggestionService {
                     .thumbnailUrl(thumbnailUrl)
                     .build();
 
-            suggestedVideoRepository.save(suggestedVideo);
+            listToSave.add(suggestedVideo);
         }
+        suggestedVideoRepository.saveAll(listToSave);
         log.info("Processo de sugestão finalizado. {} vídeos salvos no banco.", videosData.size());
     }
 
@@ -94,8 +103,27 @@ public class SuggestionService {
         return suggestedVideoRepository.existsBySourceChannelUrlAndChannelId(sourceChannelUrl, channelId);
     }
 
-    public void deleteSuggestion(java.util.UUID videoId) {
-        suggestedVideoRepository.deleteById(videoId);
+    @Transactional
+    public void deleteSuggestion(User currentUser, UUID channelId, UUID videoId) {
+        if (currentUser == null || channelId == null || videoId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parâmetros inválidos");
+        }
+        
+        // Verify channel ownership
+        if (!channelRepository.existsByIdAndUserId(channelId, currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado ao canal");
+        }
+
+        // Find suggestion
+        SuggestedVideo suggestion = suggestedVideoRepository.findById(videoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sugestão não encontrada"));
+
+        // Verify suggestion belongs to the channel
+        if (suggestion.getChannel() == null || !suggestion.getChannel().getId().equals(channelId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sugestão não pertence a este canal");
+        }
+
+        suggestedVideoRepository.delete(suggestion);
     }
     
     private String extractThumbnailUrl(String videoUrl) {

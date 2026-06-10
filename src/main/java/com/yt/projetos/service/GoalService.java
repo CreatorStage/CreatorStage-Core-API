@@ -5,10 +5,12 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.model.Goal;
+import com.yt.projetos.dto.GoalRequest;
 import com.yt.projetos.model.User;
 import com.yt.projetos.repository.ChannelRepository;
 import com.yt.projetos.repository.GoalRepository;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GoalService {
 
     private final GoalRepository goalRepository;
@@ -29,26 +32,37 @@ public class GoalService {
         return goalRepository.findByChannelId(channelId);
     }
 
-    public Goal createGoal(User currentUser, UUID channelId, Goal goal) {
+    @Transactional
+    public Goal createGoal(User currentUser, UUID channelId, GoalRequest request) {
         Channel channel = getOwnedChannel(currentUser, channelId);
-        goal.setChannel(channel);
+        Goal goal = Goal.builder()
+                .title(request.title())
+                .description(request.description())
+                .targetValue(request.targetValue())
+                .currentValue(request.currentValue() != null ? request.currentValue() : 0.0)
+                .deadline(request.deadline())
+                .completed(request.completed())
+                .channel(channel)
+                .build();
         return goalRepository.save(goal);
     }
 
-    public Goal updateGoal(User currentUser, UUID id, Goal updates) {
+    @Transactional
+    public Goal updateGoal(User currentUser, UUID id, GoalRequest updates) {
         Goal goal = goalRepository.findById(id)
                 .filter(found -> isOwnedChannel(currentUser, found.getChannel() != null ? found.getChannel().getId() : null))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (updates.getTitle() != null) goal.setTitle(updates.getTitle());
-        if (updates.getDescription() != null) goal.setDescription(updates.getDescription());
-        if (updates.getTargetValue() != null) goal.setTargetValue(updates.getTargetValue());
-        if (updates.getCurrentValue() != null) goal.setCurrentValue(updates.getCurrentValue());
-        if (updates.getDeadline() != null) goal.setDeadline(updates.getDeadline());
-        goal.setCompleted(updates.isCompleted());
+        if (updates.title() != null) goal.setTitle(updates.title());
+        if (updates.description() != null) goal.setDescription(updates.description());
+        if (updates.targetValue() != null) goal.setTargetValue(updates.targetValue());
+        if (updates.currentValue() != null) goal.setCurrentValue(updates.currentValue());
+        if (updates.deadline() != null) goal.setDeadline(updates.deadline());
+        goal.setCompleted(updates.completed());
         return goalRepository.save(goal);
     }
 
+    @Transactional
     public void deleteGoal(User currentUser, UUID id) {
         Goal goal = goalRepository.findById(id)
                 .filter(found -> isOwnedChannel(currentUser, found.getChannel() != null ? found.getChannel().getId() : null))

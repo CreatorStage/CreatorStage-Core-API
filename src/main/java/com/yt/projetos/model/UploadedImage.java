@@ -31,6 +31,10 @@ public class UploadedImage {
     @Column(nullable = false)
     private byte[] data;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

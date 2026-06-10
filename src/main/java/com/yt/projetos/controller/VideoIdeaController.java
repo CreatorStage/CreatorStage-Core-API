@@ -21,6 +21,7 @@ import com.yt.projetos.dto.ReferenceResponse;
 import com.yt.projetos.dto.ScriptVersionResponse;
 import com.yt.projetos.dto.ScriptVersionRequest;
 import com.yt.projetos.dto.VideoIdeaResponse;
+import com.yt.projetos.dto.VideoIdeaRequest;
 import com.yt.projetos.dto.VideoScriptResponse;
 import com.yt.projetos.dto.VideoScriptRequest;
 import com.yt.projetos.model.Note;
@@ -29,6 +30,7 @@ import com.yt.projetos.model.ScriptVersion;
 import com.yt.projetos.model.User;
 import com.yt.projetos.model.VideoIdea;
 import com.yt.projetos.service.VideoIdeaService;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,12 +49,12 @@ public class VideoIdeaController {
     }
 
     @PostMapping("/channels/{channelId}/ideas")
-    public ResponseEntity<VideoIdeaResponse> createIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID channelId, @RequestBody VideoIdea idea) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(toVideoIdeaResponse(videoIdeaService.createIdea(currentUser, channelId, idea)));
+    public ResponseEntity<VideoIdeaResponse> createIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID channelId, @Valid @RequestBody VideoIdeaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(toVideoIdeaResponse(videoIdeaService.createIdea(currentUser, channelId, request)));
     }
 
     @PutMapping("/ideas/{id}")
-    public ResponseEntity<VideoIdeaResponse> updateIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @RequestBody VideoIdea updates) {
+    public ResponseEntity<VideoIdeaResponse> updateIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @Valid @RequestBody VideoIdeaRequest updates) {
         return ResponseEntity.ok(toVideoIdeaResponse(videoIdeaService.updateIdea(currentUser, id, updates)));
     }
 
