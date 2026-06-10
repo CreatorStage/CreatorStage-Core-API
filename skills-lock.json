@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "docker-best-practices": {
+      "source": "josiahsiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/docker-master/skills/docker-best-practices/SKILL.md",
+      "computedHash": "aa4f4c45dc4b71aa392a8cf204e5610426fe2534db9cc4c0c26a335f04cf5a68"
+    },
     "java-springboot": {
       "source": "github/awesome-copilot",
       "sourceType": "github",

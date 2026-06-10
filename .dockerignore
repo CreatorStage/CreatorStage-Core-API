@@ -1,0 +1,27 @@
+# Version control
+.git
+.gitignore
+
+# Maven build outputs
+target/
+*.jar
+*.war
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS and system files
+.DS_Store
+Thumbs.db
+
+# Docker-related files
+Dockerfile
+.dockerignore
+docker-compose*
+
+# Local maven wrapper configuration
+.mvn/
+mvnw
+mvnw.cmd
