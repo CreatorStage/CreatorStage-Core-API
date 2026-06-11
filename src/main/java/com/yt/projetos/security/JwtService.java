@@ -33,7 +33,6 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("username", user.getUsername())
-                .claim("name", user.getName())
                 .claim("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .issuedAt(now)
                 .expiration(expiry)
@@ -45,7 +44,6 @@ public class JwtService {
         Claims claims = getClaims(token);
         String idStr = claims.getSubject();
         String username = claims.get("username", String.class);
-        String name = claims.get("name", String.class);
         String createdAtStr = claims.get("createdAt", String.class);
         
         java.time.LocalDateTime createdAt = null;
@@ -58,7 +56,6 @@ public class JwtService {
         return User.builder()
                 .id(UUID.fromString(idStr))
                 .username(username)
-                .name(name)
                 .createdAt(createdAt)
                 .build();
     }

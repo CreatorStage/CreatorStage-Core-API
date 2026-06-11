@@ -37,7 +37,6 @@ public class AuthService {
         }
 
         User user = User.builder()
-                .name(request.name())
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .build();
@@ -53,6 +52,6 @@ public class AuthService {
     }
 
     private UserResponse toUserResponse(User user) {
-        return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getCreatedAt());
+        return new UserResponse(user.getId(), user.getUsername(), user.getCreatedAt());
     }
 }
