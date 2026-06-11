@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.yt.projetos.model.Channel;
 import com.yt.projetos.dto.VideoIdeaRequest;
+import com.yt.projetos.dto.VideoIdeaUpdateRequest;
 import com.yt.projetos.model.Note;
 import com.yt.projetos.model.Reference;
 import com.yt.projetos.model.ScriptVersion;
@@ -72,9 +73,14 @@ public class VideoIdeaService {
     }
 
     @Transactional
-    public VideoIdea updateIdea(User currentUser, UUID id, VideoIdeaRequest updates) {
+    public VideoIdea updateIdea(User currentUser, UUID id, VideoIdeaUpdateRequest updates) {
         VideoIdea idea = getOwnedIdea(currentUser, id);
-        if (updates.mainTitle() != null) idea.setMainTitle(updates.mainTitle());
+        if (updates.mainTitle() != null) {
+            if (updates.mainTitle().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O título principal não pode ser vazio");
+            }
+            idea.setMainTitle(updates.mainTitle());
+        }
         if (updates.description() != null) idea.setDescription(updates.description());
         if (updates.status() != null) idea.setStatus(updates.status());
         if (updates.tags() != null) idea.setTags(updates.tags());

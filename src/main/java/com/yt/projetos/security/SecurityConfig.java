@@ -50,7 +50,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("https://creatorsdeck.site", "chrome-extension://*")); // Add "http://localhost:5173" here if you need local development access
+        configuration.setAllowedOriginPatterns(List.of("https://creatorsdeck.site", "chrome-extension://*", "http://localhost:3001", "http://localhost:5173")); // Add "http://localhost:5173" here if you need local development access
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
