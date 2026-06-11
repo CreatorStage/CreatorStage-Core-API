@@ -22,6 +22,7 @@ import com.yt.projetos.dto.ScriptVersionResponse;
 import com.yt.projetos.dto.ScriptVersionRequest;
 import com.yt.projetos.dto.VideoIdeaResponse;
 import com.yt.projetos.dto.VideoIdeaRequest;
+import com.yt.projetos.dto.VideoIdeaUpdateRequest;
 import com.yt.projetos.dto.VideoScriptResponse;
 import com.yt.projetos.dto.VideoScriptRequest;
 import com.yt.projetos.model.Note;
@@ -54,7 +55,7 @@ public class VideoIdeaController {
     }
 
     @PutMapping("/ideas/{id}")
-    public ResponseEntity<VideoIdeaResponse> updateIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @Valid @RequestBody VideoIdeaRequest updates) {
+    public ResponseEntity<VideoIdeaResponse> updateIdea(@AuthenticationPrincipal User currentUser, @PathVariable UUID id, @Valid @RequestBody VideoIdeaUpdateRequest updates) {
         return ResponseEntity.ok(toVideoIdeaResponse(videoIdeaService.updateIdea(currentUser, id, updates)));
     }
 
