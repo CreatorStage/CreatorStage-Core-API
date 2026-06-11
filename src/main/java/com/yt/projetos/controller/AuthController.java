@@ -34,4 +34,9 @@ public class AuthController {
         User user = authService.getCurrentUser(currentUser);
         return ResponseEntity.ok(new UserResponse(user.getId(), user.getUsername(), user.getCreatedAt()));
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 }
