@@ -1,5 +1,5 @@
 # Build Stage
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
 WORKDIR /app
 
 # Cache Maven dependencies by copying pom.xml first
@@ -11,10 +11,10 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests
 
 # Run Stage
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 
 # Set security options & non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 WORKDIR /app
 
 # Copy built artifact with correct ownership
